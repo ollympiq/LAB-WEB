@@ -1,10 +1,51 @@
 import React, { useState } from 'react';
 import { Button, Form, Input, Layout, Menu, Select } from 'antd';
-import { ExtendedCardInfo } from './App'; // Importăm interfața definită
+import { makeAutoObservable } from 'mobx';
+import { observer } from 'mobx-react';
 
 const { Item: MenuItem } = Menu;
 const { Header, Content, Footer } = Layout;
 const { Option } = Select;
+
+class Store {
+    items = new Array(3).fill(null).map((_, index) => ({
+        key: (index + 1).toString(),
+        NrCard: generateRandomCardNumber(),
+        NumberOfCard: `Card ${index + 1}`,
+        DateOfExpire: generateRandomDateOfExpire(),
+        NameOfOwner: romanianNames[Math.floor(Math.random() * romanianNames.length)],
+        CVC: generateRandomCVC(),
+        color: generateRandomColor(),
+        bank: generateRandomBank(),
+    }));
+
+    constructor() {
+        makeAutoObservable(this);
+        this.initializeData();
+    }
+
+    saveDataToLocalStorage = (key, data) => {
+        localStorage.setItem(key, JSON.stringify(data));
+    };
+
+    getDataFromLocalStorage = (key) => {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+    };
+
+    initializeData = () => {
+        const storedData = this.getDataFromLocalStorage('items');
+        if (!storedData) {
+            this.saveDataToLocalStorage('items', this.items);
+        }
+    };
+
+    updateItem = (key, data) => {
+        const storedData = this.getDataFromLocalStorage('items');
+        const updatedData = storedData.map(item => (item.key === key ? { ...item, ...data } : item));
+        this.saveDataToLocalStorage('items', updatedData);
+    };
+}
 
 const generateRandomCardNumber = () => {
     const generatePart = () => Math.floor(1000 + Math.random() * 9000);
@@ -13,11 +54,11 @@ const generateRandomCardNumber = () => {
 
 const generateRandomDateOfExpire = () => {
     const generateMonth = () => String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-    const generateYear = () => String(Math.floor(Math.random() * 10) + 22); // Valori între 2022 și 2031
+    const generateYear = () => String(Math.floor(Math.random() * 10) + 22);
     return `${generateMonth()}/${generateYear()}`;
 };
 
-const generateRandomCVC = () => String(Math.floor(100 + Math.random() * 900)); // CVC de 3 cifre
+const generateRandomCVC = () => String(Math.floor(100 + Math.random() * 900));
 
 const romanianNames = ['Andrei Popescu', 'Maria Ionescu', 'Ion Vasilescu', 'Elena Dumitrescu', 'Alexandru Radulescu', 'Ana Stanciu', 'Mihai Stefanescu', 'Cristina Stan', 'George Nicolescu', 'Laura Ungureanu'];
 
@@ -25,40 +66,24 @@ const generateRandomBank = () => {
     const banks = ['MAIB', 'Gringotts', 'MICB'];
     return banks[Math.floor(Math.random() * banks.length)];
 };
+
 const generateRandomColor = () => {
     const colors = ['blue', 'red', 'green', 'yellow'];
     return colors[Math.floor(Math.random() * colors.length)];
 };
 
-const items: ExtendedCardInfo[] = new Array(3).fill(null).map((_, index) => ({
-    key: (index + 1).toString(),
-    NrCard: generateRandomCardNumber(),
-    NumberOfCard: `Card ${index + 1}`,
-    DateOfExpire: generateRandomDateOfExpire(),
-    NameOfOwner: romanianNames[Math.floor(Math.random() * romanianNames.length)],
-    CVC: generateRandomCVC(),
-    color: generateRandomColor(), // Generăm dinamic valoarea culorii
-    bank: generateRandomBank(),
-}));
+const store = new Store();
 
-const validateCVC = (_, value) => {
-    if (!value) {
-        return Promise.reject('Vă rugăm să introduceți CVC-ul');
-    }
-    if (!/^\d{3}$/.test(value)) {
-        return Promise.reject('Vă rugăm să introduceți un CVC valid (3 cifre)');
-    }
-    return Promise.resolve();
-};
-
-const CustomForm = () => {
+const CustomForm = observer(() => {
     const [formSubmitted, setFormSubmitted] = useState(false);
     const [formData, setFormData] = useState(null);
+    const [selectedItem, setSelectedItem] = useState('1');
 
     const onFinish = (values) => {
         setFormSubmitted(true);
         setFormData(values);
-        // Handle form submission logic
+        store.updateItem(selectedItem, values);
+
         console.log('Formular trimis cu valorile:', values);
     };
 
@@ -127,12 +152,33 @@ const CustomForm = () => {
             )}
         </div>
     );
+});
+
+const validateCVC = (_, value) => {
+    if (!value) {
+        return Promise.reject('Vă rugăm să introduceți CVC-ul');
+    }
+    if (!/^\d{3}$/.test(value)) {
+        return Promise.reject('Vă rugăm să introduceți un CVC valid (3 cifre)');
+    }
+    return Promise.resolve();
 };
 
-const App = () => {
+const fetchDataWithLoading = async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const storedData = store.getDataFromLocalStorage('items');
+    if (storedData) {
+        store.items = storedData;
+    }
+};
+
+fetchDataWithLoading();
+
+const App = observer(() => {
     const [selectedItem, setSelectedItem] = useState('1');
+
     const handleMenuItemClick = (item) => setSelectedItem(item.key);
-    const selectedCard = items.find((item) => item.key === selectedItem);
+    const selectedCard = store.items.find((item) => item.key === selectedItem);
 
     return (
         <Layout>
@@ -146,7 +192,7 @@ const App = () => {
                     onClick={handleMenuItemClick}
                     style={{ flex: 1, minWidth: 0 }}
                 >
-                    {items.map(item => (
+                    {store.items.map(item => (
                         <MenuItem key={item.key}>{item.NumberOfCard}</MenuItem>
                     ))}
                     <MenuItem key="form">Formular</MenuItem>
@@ -179,6 +225,6 @@ const App = () => {
             </Footer>
         </Layout>
     );
-};
+});
 
 export default App;
