@@ -22,7 +22,7 @@ class Store {
     users = [
         { username: 'user1', password: 'password1' },
         { username: 'user2', password: 'password2' },
-        // Adăugați mai multe perechi username-password după necesitate
+        
     ];
 
     constructor() {
@@ -185,10 +185,8 @@ const LoginForm = observer(() => {
         if (isAuthenticated) {
             setLoginError(false);
             console.log('Autentificare reușită pentru utilizatorul:', username);
-            // Aici poți face orice acțiune suplimentară necesară după autentificare
-            // Exemplu: Redirecționează utilizatorul către pagina principală
-            // window.location.href = '/';
-            return; // Ieșim din funcție pentru a opri procesarea
+
+            return;
         }
 
         setLoginError(true);
