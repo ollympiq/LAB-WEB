@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Button, Form, Input, Layout, Menu, Select } from 'antd';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react';
+import { useState } from 'react';
+import CardDetails from './CardDetails';
 
 const { Item: MenuItem } = Menu;
 const { Header, Content, Footer } = Layout;
@@ -22,7 +25,7 @@ class Store {
     users = [
         { username: 'user1', password: 'password1' },
         { username: 'user2', password: 'password2' },
-        // Adăugați mai multe perechi username-password după necesitate
+
     ];
 
     constructor() {
@@ -147,9 +150,9 @@ const CustomForm = observer(() => {
                     rules={[{ required: true, message: 'Vă rugăm să introduceți banca' }]}
                 >
                     <Select placeholder="Selectează bancă">
-                        <Option value="Example Bank 1">MAIB</Option>
-                        <Option value="Example Bank 2">Gringotts</Option>
-                        <Option value="Example Bank 3">MICB</Option>
+                        <Option value="MAIB">MAIB</Option>
+                        <Option value="Gringotts">Gringotts</Option>
+                        <Option value="MICB">MICB</Option>
                     </Select>
                 </Form.Item>
                 <Form.Item>
@@ -185,10 +188,8 @@ const LoginForm = observer(() => {
         if (isAuthenticated) {
             setLoginError(false);
             console.log('Autentificare reușită pentru utilizatorul:', username);
-            // Aici poți face orice acțiune suplimentară necesară după autentificare
-            // Exemplu: Redirecționează utilizatorul către pagina principală
-            // window.location.href = '/';
-            return; // Ieșim din funcție pentru a opri procesarea
+
+            return;
         }
 
         setLoginError(true);
@@ -242,6 +243,18 @@ const fetchDataWithLoading = async () => {
 };
 
 fetchDataWithLoading();
+const HomePageForm = observer(() => {
+
+    return (
+        <div>
+            {}
+            <h2>Formular Pagina Principală</h2>
+            <Form>
+                {"Bine ati venit la pagina principala!"}
+            </Form>
+        </div>
+    );
+});
 
 const App = observer(() => {
     const [selectedItem, setSelectedItem] = useState('1');
@@ -263,54 +276,60 @@ const App = observer(() => {
     const selectedCard = store.items.find((item) => item.key === selectedItem);
 
     return (
-        <Layout>
-            <Header style={{ display: 'flex', alignItems: 'center' }}>
-                <div className="demo-logo" />
-                <Menu
-                    theme="dark"
-                    mode="horizontal"
-                    defaultSelectedKeys={['1']}
-                    selectedKeys={[selectedItem]}
-                    onClick={handleMenuItemClick}
-                    style={{ flex: 1, minWidth: 0 }}
-                >
-                    {store.items.map(item => (
-                        <MenuItem key={item.key}>{item.NumberOfCard}</MenuItem>
-                    ))}
-                    <MenuItem key="form">Formular</MenuItem>
-                    <MenuItem key="login">Autentificare</MenuItem>
-                </Menu>
-                <Button onClick={showLocalStorageData} style={{ marginLeft: '16px' }}>Card-localStorage</Button>
-                <Button onClick={showUsersDataFromLocalStorage}>Autentificare-localStorage</Button>
-            </Header>
-            <Content style={{ padding: '0 48px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <div
-                    style={{
-                        background: '#fff',
-                        width: '60%',
-                        padding: '24px',
-                        borderRadius: '5px',
-                        textAlign: 'center',
-                    }}
-                >
-                    {currentRoute === 'form' ? <CustomForm /> : (
-                        currentRoute === 'login' ? <LoginForm /> : (
-                            <>
-                                <h2 style={{ fontSize: '24px', marginBottom: '12px' }}>Cardul {selectedCard?.NrCard}</h2>
-                                <p style={{ fontSize: '20px', marginBottom: '8px' }}>Numele proprietarului: {selectedCard?.NameOfOwner}</p>
-                                <p style={{ fontSize: '20px', marginBottom: '8px' }}>Data expirării: {selectedCard?.DateOfExpire}</p>
-                                <p style={{ fontSize: '20px', marginBottom: '8px' }}>CVC: {selectedCard?.CVC}</p>
-                                <p style={{ fontSize: '20px', marginBottom: '8px' }}>Culoare: {selectedCard?.color}</p>
-                                <p style={{ fontSize: '20px', marginBottom: '8px' }}>Bank: {selectedCard?.bank}</p>
-                            </>
-                        )
-                    )}
-                </div>
-            </Content>
-            <Footer style={{ textAlign: 'center' }}>
-                Ant Design ©{new Date().getFullYear()} Creat de Ant UED
-            </Footer>
-        </Layout>
+        <Router>
+            <Layout>
+                <Header style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="demo-logo" />
+                    <Menu
+                        theme="dark"
+                        mode="horizontal"
+                        defaultSelectedKeys={['1']}
+                        selectedKeys={[selectedItem]}
+                        onClick={handleMenuItemClick}
+                        style={{ flex: 1, minWidth: 0 }}
+                    >
+                        <MenuItem key="home">
+                            <Link to="/">Acasă</Link>
+                        </MenuItem>
+                        {store.items.map(item => (
+                            <MenuItem key={item.key}>
+                                <Link to={`/cards/${item.key}`}>{item.NumberOfCard}</Link>
+                            </MenuItem>
+                        ))}
+                        <MenuItem key="form">
+                            <Link to="/form">Formular</Link>
+                        </MenuItem>
+                        <MenuItem key="login">
+                            <Link to="/login">Autentificare</Link>
+                        </MenuItem>
+                    </Menu>
+                    <Button onClick={showLocalStorageData} style={{ marginLeft: '16px' }}>Card-localStorage</Button>
+                    <Button onClick={showUsersDataFromLocalStorage}>Autentificare-localStorage</Button>
+                </Header>
+                <Content style={{ padding: '0 48px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div
+                        style={{
+                            background: '#fff',
+                            width: '60%',
+                            padding: '24px',
+                            borderRadius: '5px',
+                            textAlign: 'center',
+                        }}
+                    >
+                        <Routes>
+                            {}
+                            <Route path="/" element={<HomePageForm />} />
+                            <Route path="/form" element={<CustomForm />} />
+                            <Route path="/login" element={<LoginForm />} />
+                            <Route path="/cards/:id" element={<CardDetails store={store} />} />
+                        </Routes>
+                    </div>
+                </Content>
+                <Footer style={{ textAlign: 'center' }}>
+                    Ant Design ©{new Date().getFullYear()} Creat de Ant UED
+                </Footer>
+            </Layout>
+        </Router>
     );
 });
 
